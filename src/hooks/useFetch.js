@@ -35,7 +35,6 @@ export function useFetch(url) {
       });
 
     return () => {
-      // Nettoyage pour éviter les fuites de mémoire si le composant est démonté
       isMounted = false;
     };
   }, [url]);

@@ -1,33 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Timer, Check, X } from 'lucide-react';
+import { Timer, Check, X, Loader2 } from 'lucide-react';
 import Button from '../components/ui/Button';
+import { useFetch } from '../hooks/useFetch';
 
 export default function Quiz() {
   const navigate = useNavigate();
+  const { data: questions, loading, error } = useFetch('/questions.json');
+  
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isAnswered, setIsAnswered] = useState(false);
 
-  // Mock Question
-  const question = {
-    id: 1,
-    category: 'Manga/Anime',
-    text: "Dans L'Attaque des Titans, quel est le véritable nom du Titan Cuirassé ?",
-    options: ['Bertolt Hoover', 'Reiner Braun', 'Zeke Yeager', 'Annie Leonhart'],
-    correct: 1
-  };
-
   useEffect(() => {
+    if (loading || error || !questions) return;
+    
     if (timeLeft > 0 && !isAnswered) {
       const timerId = setInterval(() => {
         setTimeLeft(t => t - 1);
       }, 1000);
       return () => clearInterval(timerId);
-    } else if (timeLeft === 0) {
-      handleNext();
+    } else if (timeLeft === 0 && !isAnswered) {
+      setIsAnswered(true);
     }
-  }, [timeLeft, isAnswered]);
+  }, [timeLeft, isAnswered, loading, error, questions]);
+
+  if (loading) {
+    return (
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Loader2 size={48} className="spinner" style={{ animation: 'spin 1s linear infinite', color: 'var(--apple-blue)' }} />
+      </div>
+    );
+  }
+
+  if (error || !questions) {
+    return (
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--apple-red)' }}>
+        <h2>Erreur: {error || 'Impossible de charger les questions'}</h2>
+      </div>
+    );
+  }
+
+  const question = questions[currentQuestionIndex];
 
   const handleSelect = (index) => {
     if (!isAnswered) {
@@ -44,29 +59,40 @@ export default function Quiz() {
   };
 
   const handleNext = () => {
-    navigate('/resultats');
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedOption(null);
+      setIsAnswered(false);
+      setTimeLeft(60);
+    } else {
+      navigate('/resultats');
+    }
   };
 
   const getOptionStatus = (index) => {
     if (!isAnswered) {
       return 'default';
     }
-    if (index === question.correct) {
+    if (index === question.bonne_réponse) {
       return 'correct';
     }
-    if (selectedOption === index && index !== question.correct) {
+    if (selectedOption === index && index !== question.bonne_réponse) {
       return 'wrong';
     }
     return 'default';
   };
 
+  const progressPercentage = ((currentQuestionIndex) / questions.length) * 100;
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+      
       {/* Header with Progress & Timer */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
         <div style={{ flex: 1 }}>
           <div className="progress-container" style={{ marginBottom: 0 }}>
-            <div className="progress-fill" style={{ width: '20%' }}></div>
+            <div className="progress-fill" style={{ width: `${progressPercentage}%` }}></div>
           </div>
         </div>
         <div style={{ 
@@ -86,12 +112,12 @@ export default function Quiz() {
           borderRadius: '16px', fontSize: '0.9rem', fontWeight: 700, color: '#fff', 
           textTransform: 'uppercase', letterSpacing: '1px' 
         }}>
-          {question.category}
+          {question.catégorie}
         </div>
 
         {/* Question Text */}
         <h2 style={{ fontSize: '1.8rem', lineHeight: '1.4', color: 'var(--text-primary)' }}>
-          {question.text}
+          {question.libellé}
         </h2>
 
         {/* Options */}
@@ -105,8 +131,8 @@ export default function Quiz() {
               onClick={() => handleSelect(idx)}
             >
               <span>{opt}</span>
-              {isAnswered && idx === question.correct && <Check color="var(--apple-green)" size={24} />}
-              {isAnswered && selectedOption === idx && idx !== question.correct && <X color="var(--apple-red)" size={24} />}
+              {isAnswered && idx === question.bonne_réponse && <Check color="var(--apple-green)" size={24} />}
+              {isAnswered && selectedOption === idx && idx !== question.bonne_réponse && <X color="var(--apple-red)" size={24} />}
             </Button>
           ))}
         </div>
@@ -118,7 +144,7 @@ export default function Quiz() {
           variant="primary" 
           disabled={selectedOption === null && !isAnswered}
           onClick={handleSubmit}
-          status={isAnswered ? (selectedOption === question.correct ? 'correct' : 'wrong') : 'default'}
+          status={isAnswered ? (selectedOption === question.bonne_réponse ? 'correct' : 'wrong') : 'default'}
         >
           {isAnswered ? 'CONTINUER' : 'VÉRIFIER'}
         </Button>

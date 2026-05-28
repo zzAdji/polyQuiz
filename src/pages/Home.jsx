@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, User, ChevronRight } from 'lucide-react';
+import { Trophy, User, ChevronRight, Star } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Leaderboard from '../components/Leaderboard';
+import { useUser } from '../context/UserContext';
 
 export default function Home() {
-  const [pseudo, setPseudo] = useState('');
+  const { pseudo, setPseudo, bestScore } = useUser();
+  const [inputValue, setInputValue] = useState(pseudo || '');
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const navigate = useNavigate();
 
   const handleStart = (e) => {
     e.preventDefault();
-    if (pseudo.trim()) {
+    if (inputValue.trim()) {
+      setPseudo(inputValue.trim());
       navigate('/quiz');
     }
   };
@@ -33,26 +36,50 @@ export default function Home() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '32px' }}>
-      
+
       <div style={{ textAlign: 'center' }}>
-        <h1 style={{ fontSize: '4rem', marginBottom: '8px', color: 'var(--text-primary)', letterSpacing: '-1.5px' }}>PolyQuiz</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: 500 }}>Montre que tu es le plus fort.</p>
+        <h1 style={{ fontSize: '4rem', marginBottom: '8px', color: 'var(--text-primary)', letterSpacing: '-1.5px' }}>
+          {pseudo ? `Bon retour, ${pseudo}` : 'PolyQuiz'}
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: 500 }}>
+          {pseudo ? 'Prêt pour tous les battre ?' : 'Montre que tu es le plus fort.'}
+        </p>
       </div>
 
+      {/* Meilleur score de l'utilisateur*/}
+      {pseudo && bestScore > 0 && (
+        <div style={{
+          background: 'var(--apple-gold-light)',
+          border: '1px solid var(--apple-gold)',
+          borderRadius: '20px',
+          padding: '16px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Star size={22} color="var(--apple-gold)" />
+            <span style={{ fontWeight: 700, color: 'var(--apple-gold)' }}>Votre meilleur score</span>
+          </div>
+          <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--apple-gold)' }}>
+            {bestScore} pts
+          </span>
+        </div>
+      )}
+
       <form onSubmit={handleStart} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <Input 
+        <Input
           icon={User}
-          type="text" 
-          placeholder="Entrez votre pseudo..." 
-          value={pseudo}
-          onChange={(e) => setPseudo(e.target.value)}
+          type="text"
+          placeholder="Entrez votre pseudo..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           required
         />
-        
-        <Button 
-          type="submit" 
-          variant="primary" 
-          disabled={!pseudo.trim()}
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={!inputValue.trim()}
           style={{ marginTop: '8px' }}
         >
           COMMENCER
@@ -60,10 +87,10 @@ export default function Home() {
       </form>
 
       {/* Leaderboard Preview */}
-      <div style={{ 
-        background: 'var(--surface-color)', 
-        borderRadius: '24px', 
-        padding: '24px', 
+      <div style={{
+        background: 'var(--surface-color)',
+        borderRadius: '24px',
+        padding: '24px',
         border: '1px solid var(--border-color)',
         display: 'flex',
         flexDirection: 'column',
@@ -73,12 +100,12 @@ export default function Home() {
           <Trophy size={20} color="#FFD700" />
           <span>Top 3 Mondial</span>
         </div>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {top3.map(player => (
             <div key={player.rank} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <span style={{ 
+                <span style={{
                   color: player.rank === 1 ? '#FFD700' : player.rank === 2 ? '#C0C0C0' : '#CD7F32',
                   fontWeight: 800, width: '20px'
                 }}>#{player.rank}</span>
@@ -89,10 +116,10 @@ export default function Home() {
           ))}
         </div>
 
-        <button 
+        <button
           onClick={() => setShowLeaderboard(true)}
-          style={{ 
-            background: 'none', border: 'none', color: 'var(--apple-blue)', 
+          style={{
+            background: 'none', border: 'none', color: 'var(--apple-blue)',
             fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center',
             gap: '4px', marginTop: '8px', cursor: 'pointer', fontSize: '1rem',
             fontFamily: 'inherit'
