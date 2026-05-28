@@ -36,7 +36,7 @@ export default function Home() {
       
       <div style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: '4rem', marginBottom: '8px', color: 'var(--text-primary)', letterSpacing: '-1.5px' }}>PolyQuiz</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: 500 }}>Apprends en t'amusant.</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', fontWeight: 500 }}>Montre que tu es le plus fort.</p>
       </div>
 
       <form onSubmit={handleStart} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

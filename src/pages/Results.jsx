@@ -24,7 +24,7 @@ export default function Results() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '32px' }}>
       
       <div style={{ textAlign: 'center', marginTop: '24px' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '8px', color: 'var(--text-primary)' }}>Leçon Complétée !</h1>
+        <h1 style={{ fontSize: '2.5rem', marginBottom: '8px', color: 'var(--text-primary)' }}>C'est terminé !</h1>
         <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Tu as fait un super travail.</p>
       </div>
 
