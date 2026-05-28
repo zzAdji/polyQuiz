@@ -47,10 +47,6 @@ export default function MainLayout({ children }) {
         <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
       </header>
 
-      {/*
-        The key={location.pathname} ensures that the div remounts on route change,
-        triggering the CSS animation (page-transition) every time we navigate.
-      */}
       <main key={location.pathname} className="page-transition" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {children}
       </main>
