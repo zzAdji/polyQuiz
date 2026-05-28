@@ -1,14 +1,43 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Trophy, X } from 'lucide-react';
+import { useUser } from '../context/UserContext';
 
 export default function Leaderboard({ onClose }) {
-  const leaderboardData = [
-    { rank: 1, name: 'Faker', score: 9800 },
-    { rank: 2, name: 'S1mple', score: 8500 },
-    { rank: 3, name: 'ZywOo', score: 8100 },
-    { rank: 4, name: 'TenZ', score: 7200 },
-    { rank: 5, name: 'Caps', score: 6900 },
+  const { pseudo, bestScore } = useUser();
+  const staticLeaderboard = [
+    { name: 'Faker', score: 9800, isCurrentUser: false },
+    { name: 'S1mple', score: 8500, isCurrentUser: false },
+    { name: 'ZywOo', score: 8100, isCurrentUser: false },
+    { name: 'TenZ', score: 7200, isCurrentUser: false },
+    { name: 'Caps', score: 6900, isCurrentUser: false },
   ];
+
+  const leaderboardData = useMemo(() => {
+    const list = [...staticLeaderboard];
+    const hasPlayableUser = Boolean(pseudo);
+    const sanitizedScore = Number.isFinite(bestScore) ? Math.max(0, bestScore) : 0;
+
+    if (hasPlayableUser) {
+      const existingIndex = list.findIndex(
+        (player) => player.name.toLowerCase() === pseudo.toLowerCase()
+      );
+
+      if (existingIndex >= 0) {
+        list[existingIndex] = {
+          ...list[existingIndex],
+          score: Math.max(list[existingIndex].score, sanitizedScore),
+          isCurrentUser: true,
+          name: pseudo,
+        };
+      } else {
+        list.push({ name: pseudo, score: sanitizedScore, isCurrentUser: true });
+      }
+    }
+
+    return list
+      .sort((a, b) => b.score - a.score)
+      .map((player, index) => ({ ...player, rank: index + 1 }));
+  }, [pseudo, bestScore]);
 
   const getRankColor = (rank) => {
     switch(rank) {
@@ -57,14 +86,15 @@ export default function Leaderboard({ onClose }) {
       
       <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {leaderboardData.map((player) => (
-          <li key={player.rank} style={{
+          <li key={`${player.name}-${player.rank}`} style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px',
-            background: 'var(--bg-color)',
+            background: player.isCurrentUser ? 'var(--apple-blue-light)' : 'var(--bg-color)',
             borderRadius: '16px',
-            border: '1px solid var(--border-color)',
+            border: player.isCurrentUser ? '2px solid var(--apple-blue)' : '1px solid var(--border-color)',
+            boxShadow: player.isCurrentUser ? '0 0 20px rgba(0, 122, 255, 0.22)' : 'none',
             fontWeight: 600
           }}>
             <span style={{ 
@@ -75,7 +105,23 @@ export default function Leaderboard({ onClose }) {
             }}>
               #{player.rank}
             </span>
-            <span style={{ flex: 1, fontSize: '1.1rem' }}>{player.name}</span>
+            <span style={{ flex: 1, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {player.name}
+              {player.isCurrentUser && (
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  color: '#fff',
+                  background: 'var(--apple-blue)',
+                  borderRadius: '999px',
+                  padding: '2px 8px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}>
+                  Vous
+                </span>
+              )}
+            </span>
             <span style={{ color: 'var(--apple-blue)', fontWeight: 700 }}>{player.score.toLocaleString()} pts</span>
           </li>
         ))}
