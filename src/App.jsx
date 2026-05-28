@@ -4,7 +4,7 @@ import { UserProvider } from './context/UserContext';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
-import Quiz from './pages/Quiz';
+import QuizEngine from './pages/QuizEngine';
 import Results from './pages/Results';
 
 function App() {
@@ -14,11 +14,19 @@ function App() {
         <MainLayout>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route 
+              path="*" 
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }     
+            />
             <Route
               path="/quiz"
               element={
                 <ProtectedRoute>
-                  <Quiz />
+                  <QuizEngine />
                 </ProtectedRoute>
               }
             />
