@@ -1,26 +1,20 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Timer, Check, X, Loader2, Zap } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useFetch } from '../hooks/useFetch';
 import { useUser } from '../context/UserContext';
 
-// ─────────────────────────────────────────────────────────────
-// ÉTAT INITIAL
-// ─────────────────────────────────────────────────────────────
 const initialState = {
-  status: 'idle',         // 'idle' | 'playing' | 'answered' | 'finished'
-  currentIndex: 0,        // index de la question courante
-  selectedOption: null,   // index de l'option sélectionnée
-  score: 0,               // score temporaire en cours de partie
-  timeLeft: 60,           // secondes restantes
+  status: 'idle',         
+  currentIndex: 0,       
+  selectedOption: null,   
+  score: 0,               
+  timeLeft: 60,           
   lastAnswerCorrect: null,
   pointsFxSeed: 0,
 };
 
-// ─────────────────────────────────────────────────────────────
-// REDUCER — externe au composant (requis par le jalon)
-// ─────────────────────────────────────────────────────────────
 function quizReducer(state, action) {
   switch (action.type) {
 
@@ -71,14 +65,12 @@ function quizReducer(state, action) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// COMPOSANT
-// ─────────────────────────────────────────────────────────────
 export default function QuizEngine() {
   const navigate = useNavigate();
   const { updateBestScore } = useUser();
   const { data: questions, loading, error } = useFetch('/questions.json');
   const [state, dispatch] = useReducer(quizReducer, initialState);
+  const intervalRef = useRef(null);
 
   const { status, currentIndex, selectedOption, score, timeLeft, lastAnswerCorrect, pointsFxSeed } = state;
 
@@ -89,20 +81,35 @@ export default function QuizEngine() {
     }
   }, [questions, status]);
 
-  // Chronomètre — sera migré vers useRef au Jalon 5
   useEffect(() => {
-    if (status !== 'playing') return;
-    if (timeLeft === 0) {
-      dispatch({ type: 'FINISH_QUIZ' });
-      return;
+    if (status === 'playing' && intervalRef.current === null) {
+      intervalRef.current = setInterval(() => {
+        dispatch({ type: 'TICK' });
+      }, 1000);
     }
-    const timerId = setInterval(() => {
-      dispatch({ type: 'TICK' });
-    }, 1000);
-    return () => clearInterval(timerId);
-  }, [status, timeLeft]);
 
-  // Redirige vers /resultats quand le quiz est terminé
+    if (status !== 'playing' && intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [status]);
+
+  useEffect(() => {
+    if (timeLeft !== 0 || status !== 'playing') return;
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    dispatch({ type: 'FINISH_QUIZ' });
+  }, [timeLeft, status]);
+
   useEffect(() => {
     if (status === 'finished') {
       updateBestScore(score);
@@ -110,7 +117,6 @@ export default function QuizEngine() {
     }
   }, [status, score, questions, navigate, updateBestScore]);
 
-  // Après affichage du feedback visuel, passe automatiquement à la question suivante
   useEffect(() => {
     if (!questions || status !== 'answered') return;
     const timeoutId = setTimeout(() => {
@@ -119,7 +125,6 @@ export default function QuizEngine() {
     return () => clearTimeout(timeoutId);
   }, [status, questions, currentIndex]);
 
-  // ── États de chargement / erreur ──────────────────────────
   if (loading) {
     return (
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Trophy, Award, Star } from 'lucide-react';
 import Button from '../components/ui/Button';
@@ -14,8 +14,11 @@ export default function Results() {
   // Récupération du score réel transmis par QuizEngine via navigate state
   const score = location.state?.score ?? 0;
   const total = location.state?.total ?? 10;
-  const correctAnswers = score / 1000; // 1000 pts par bonne réponse
-  const ratio = total > 0 ? Math.round((correctAnswers / total) * 100) : 0;
+  const { correctAnswers, ratio } = useMemo(() => {
+    const computedCorrectAnswers = score / 1000;
+    const computedRatio = total > 0 ? Math.round((computedCorrectAnswers / total) * 100) : 0;
+    return { correctAnswers: computedCorrectAnswers, ratio: computedRatio };
+  }, [score, total]);
   const isNewBest = score >= bestScore && score > 0;
 
   if (showLeaderboard) {
