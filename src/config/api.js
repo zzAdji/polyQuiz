@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'https://polyquiz-api.onrender.com' || 'http://localhost:5000';
+export const API_BASE_URL = 'https://polyquiz-api.onrender.com';
 export const TOKEN_STORAGE_KEY = 'polyquiz_token';
 
 export function getStoredToken() {
