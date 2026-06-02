@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiFetch } from '../config/api';
 
 export function useFetch(url) {
   const [data, setData] = useState(null);
@@ -9,13 +10,7 @@ export function useFetch(url) {
     let isMounted = true;
     setLoading(true);
 
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        return response.json();
-      })
+    apiFetch(url)
       .then((result) => {
         if (isMounted) {
           setData(result);

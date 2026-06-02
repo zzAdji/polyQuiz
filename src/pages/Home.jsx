@@ -1,38 +1,49 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, User, ChevronRight, Star } from 'lucide-react';
+import { Trophy, User, ChevronRight, Star, Loader2 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import Leaderboard from '../components/Leaderboard';
 import { useUser } from '../context/UserContext';
+import { apiFetch } from '../config/api';
+import { useFetch } from '../hooks/useFetch';
 
 export default function Home() {
-  const { pseudo, setPseudo, bestScore } = useUser();
+  const { pseudo, setPseudo, setToken, bestScore } = useUser();
   const [inputValue, setInputValue] = useState(pseudo || '');
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const { data: leaderboardData, loading, error } = useFetch('/api/leaderboard');
   const navigate = useNavigate();
 
-  const handleStart = (e) => {
+  const handleStart = async (e) => {
     e.preventDefault();
-    if (inputValue.trim()) {
-      setPseudo(inputValue.trim());
+    const normalizedPseudo = inputValue.trim();
+    if (!normalizedPseudo) return;
+
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    try {
+      const response = await apiFetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ pseudo: normalizedPseudo }),
+      });
+
+      setPseudo(normalizedPseudo);
+      setToken(response.token);
       navigate('/quiz');
+    } catch (error) {
+      setLoginError(error.message);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
-  const top3 = [
-    { rank: 1, name: 'Faker', score: 9800 },
-    { rank: 2, name: 'S1mple', score: 8500 },
-    { rank: 3, name: 'ZywOo', score: 8100 }
-  ];
-
-  if (showLeaderboard) {
-    return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <Leaderboard onClose={() => setShowLeaderboard(false)} />
-      </div>
-    );
-  }
+  const top3 = (leaderboardData?.length ? leaderboardData : []).slice(0, 3).map((player, index) => ({
+    rank: index + 1,
+    name: player.pseudo || player.name,
+    score: player.score,
+  }));
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '32px' }}>
@@ -79,11 +90,16 @@ export default function Home() {
         <Button
           type="submit"
           variant="primary"
-          disabled={!inputValue.trim()}
+          disabled={!inputValue.trim() || isLoggingIn}
           style={{ marginTop: '8px' }}
         >
-          COMMENCER
+          {isLoggingIn ? 'CONNEXION...' : 'COMMENCER'}
         </Button>
+        {loginError && (
+          <p style={{ color: 'var(--apple-red)', fontWeight: 700, textAlign: 'center' }}>
+            {loginError}
+          </p>
+        )}
       </form>
 
       {/* Leaderboard Preview */}
@@ -102,6 +118,25 @@ export default function Home() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {loading && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '32px' }}>
+              <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+              <Loader2 size={36} style={{ animation: 'spin 1s linear infinite', color: 'var(--apple-blue)' }} />
+            </div>
+          )}
+
+          {error && (
+            <p style={{ color: 'var(--apple-red)', textAlign: 'center', fontWeight: 700 }}>
+              {error}
+            </p>
+          )}
+
+          {!loading && !error && leaderboardData.length === 0 && (
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 700 }}>
+              Aucun score enregistre pour le moment.
+            </p>
+          )}
+          
           {top3.map(player => (
             <div key={player.rank} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -117,7 +152,7 @@ export default function Home() {
         </div>
 
         <button
-          onClick={() => setShowLeaderboard(true)}
+          onClick={() => navigate('/leaderboard')}
           style={{
             background: 'none', border: 'none', color: 'var(--apple-blue)',
             fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center',

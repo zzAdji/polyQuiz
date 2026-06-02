@@ -1,15 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Trophy, Award, Star } from 'lucide-react';
 import Button from '../components/ui/Button';
-import Leaderboard from '../components/Leaderboard';
 import { useUser } from '../context/UserContext';
 
 export default function Results() {
   const navigate = useNavigate();
   const location = useLocation();
   const { pseudo, bestScore } = useUser();
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   // Récupération du score réel transmis par QuizEngine via navigate state
   const score = location.state?.score ?? 0;
@@ -20,14 +18,6 @@ export default function Results() {
     return { correctAnswers: computedCorrectAnswers, ratio: computedRatio };
   }, [score, total]);
   const isNewBest = score >= bestScore && score > 0;
-
-  if (showLeaderboard) {
-    return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <Leaderboard onClose={() => setShowLeaderboard(false)} />
-      </div>
-    );
-  }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '32px' }}>
@@ -108,7 +98,7 @@ export default function Results() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
         <Button
           variant="secondary"
-          onClick={() => setShowLeaderboard(true)}
+          onClick={() => navigate('/leaderboard')}
           style={{ justifyContent: 'center', color: 'var(--apple-purple)' }}
         >
           <Trophy size={24} />

@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import QuizEngine from './pages/QuizEngine';
 import Results from './pages/Results';
+import LeaderboardPage from './pages/LeaderboardPage';
 
 function App() {
   return (
@@ -14,14 +15,7 @@ function App() {
         <MainLayout>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route 
-              path="*" 
-              element={
-                <ProtectedRoute>
-                  <Home />
-                </ProtectedRoute>
-              }     
-            />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route
               path="/quiz"
               element={
@@ -38,6 +32,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="*" element={<Home />} />
           </Routes>
         </MainLayout>
       </BrowserRouter>
